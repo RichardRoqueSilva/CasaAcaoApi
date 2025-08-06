@@ -6,6 +6,7 @@ import casa.controle.demo.components.exception.ResourceNotFoundException;
 import casa.controle.demo.components.mapper.CategoriasMapper;
 import casa.controle.demo.components.model.Categorias;
 import casa.controle.demo.components.repository.CategoriasRepository;
+import casa.controle.demo.components.repository.ProdutosRepository;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +20,7 @@ import java.util.stream.Collectors;
 public class CategoriasService {
 
     private final CategoriasRepository categoriaRepository;
+    private final ProdutosRepository produtosRepository;
 
     @Transactional
     public CategoriasResponse create(CategoriasRequest dto) {
@@ -38,5 +40,26 @@ public class CategoriasService {
         return categoriaRepository.findAll().stream()
                 .map(CategoriasMapper::toResponseDTO)
                 .collect(Collectors.toList());
+    }
+    @Transactional
+    public CategoriasResponse update(Integer id, CategoriasRequest dto) {
+        Categorias categoria = categoriaRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Categoria não encontrada com o id: " + id));
+
+        CategoriasMapper.updateEntityFromDTO(dto, categoria);
+        return CategoriasMapper.toResponseDTO(categoriaRepository.save(categoria));
+    }
+
+    @Transactional
+    public void delete(Integer id) {
+        Categorias categoria = categoriaRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Categoria não encontrada com o id: " + id));
+
+        // Regra de negócio: Não permitir deletar categoria se ela tiver produtos associados.
+        if (produtosRepository.existsByCategoriaId(id)) {
+            throw new IllegalStateException("Não é possível deletar a categoria, pois existem produtos associados a ela.");
+        }
+
+        categoriaRepository.delete(categoria);
     }
 }

@@ -47,8 +47,7 @@ public class UsuariosService {
                 .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado com o id: " + id));
 
         UsuariosMapper.updateEntityFromDTO(dto, usuario);
-        Usuarios updatedUsuario = usuariosRepository.save(usuario);
-        return UsuariosMapper.toResponseDTO(updatedUsuario);
+        return UsuariosMapper.toResponseDTO(usuariosRepository.save(usuario));
     }
 
     @Transactional
@@ -56,8 +55,7 @@ public class UsuariosService {
         if (!usuariosRepository.existsById(id)) {
             throw new ResourceNotFoundException("Usuário não encontrado com o id: " + id);
         }
-        // Adicionar verificação se o usuário possui listas antes de deletar, se necessário.
-        // Ex: if (listaRepository.existsByUsuarioId(id)) { throw new BusinessRuleException(...) }
+        // Adicionar regra de negócio para não deletar usuário com listas, se desejar.
         usuariosRepository.deleteById(id);
     }
 }

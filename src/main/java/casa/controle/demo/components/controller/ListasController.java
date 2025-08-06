@@ -49,4 +49,10 @@ public class ListasController {
         listasService.removeItem(listaId, produtoId);
         return ResponseEntity.noContent().build();
     }
+    @PutMapping("/{id}")
+    public ResponseEntity<ListasResponse> update(@PathVariable Integer id, @RequestBody @Valid ListasRequest dto) {
+        ListasResponse updatedLista = listasService.update(id, dto);
+        return ResponseEntity.ok(updatedLista);
+    }
+
 }

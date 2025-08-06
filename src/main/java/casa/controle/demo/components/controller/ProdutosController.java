@@ -43,27 +43,14 @@ public class ProdutosController {
         return ResponseEntity.ok(produtos);
     }
 
-    // --- Endpoints Adicionais (Opcionais) ---
-    // Você poderia facilmente adicionar endpoints para buscar, atualizar e deletar um produto.
-    // A lógica no ProdutoService precisaria ser expandida para suportá-los.
-
-    /*
-    @GetMapping("/{id}")
-    public ResponseEntity<ProdutoResponseDTO> findById(@PathVariable Integer id) {
-        ProdutoResponseDTO produto = produtoService.findById(id); // Implementar no service
-        return ResponseEntity.ok(produto);
-    }
-
     @PutMapping("/{id}")
-    public ResponseEntity<ProdutoResponseDTO> update(@PathVariable Integer id, @RequestBody @Valid ProdutoRequestDTO dto) {
-        ProdutoResponseDTO updatedProduto = produtoService.update(id, dto); // Implementar no service
-        return ResponseEntity.ok(updatedProduto);
+    public ResponseEntity<ProdutosResponse> update(@PathVariable Integer id, @RequestBody @Valid ProdutosRequest dto) {
+        return ResponseEntity.ok(produtosService.update(id, dto));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Integer id) {
-        produtoService.delete(id); // Implementar no service
+        produtosService.delete(id);
         return ResponseEntity.noContent().build();
     }
-    */
 }

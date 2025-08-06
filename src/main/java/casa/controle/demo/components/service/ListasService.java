@@ -59,21 +59,10 @@ public class ListasService {
         Produtos produto = produtosRepository.findById(itemDto.produtoId())
                 .orElseThrow(() -> new ResourceNotFoundException("Produto não encontrado com id: " + itemDto.produtoId()));
 
-        ListaProdutoId itemId = new ListaProdutoId(listaId, itemDto.produtoId());
+        // Delegamos toda a lógica para a própria entidade Lista
+        lista.addItem(produto, itemDto.quantidade());
 
-        // Verifica se o item já existe para atualizar a quantidade, ou cria um novo
-        ListaProdutos item = lista.getItens().stream()
-                .filter(i -> i.getId().equals(itemId))
-                .findFirst()
-                .orElse(new ListaProdutos());
-
-        item.setId(itemId);
-        item.setLista(lista);
-        item.setProduto(produto);
-        item.setQuantidade(itemDto.quantidade());
-
-        lista.getItens().add(item); // O Set garante que não haverá duplicatas
-
+        // Ao salvar a lista, o JPA cuidará do item novo ou atualizado devido ao cascade.
         return ListasMapper.toResponseDTO(listasRepository.save(lista));
     }
 
@@ -82,11 +71,25 @@ public class ListasService {
         Listas lista = listasRepository.findById(listaId)
                 .orElseThrow(() -> new ResourceNotFoundException("Lista não encontrada com id: " + listaId));
 
-        boolean removed = lista.getItens().removeIf(item -> item.getProduto().getId().equals(produtoId));
-        if(!removed){
-            throw new ResourceNotFoundException("Produto com id " + produtoId + " não encontrado na lista " + listaId);
-        }
+        Produtos produto = produtosRepository.findById(produtoId)
+                .orElseThrow(() -> new ResourceNotFoundException("Produto não encontrado com id: " + produtoId));
 
-        listasRepository.save(lista); // orphanRemoval=true fará a mágica no banco
+        // Delegamos a lógica de remoção para a entidade
+        lista.removeItem(produto);
+
+        listasRepository.save(lista); // orphanRemoval=true fará a remoção do banco
     }
+    @Transactional
+    public ListasResponse update(Integer id, ListasRequest dto) {
+        Listas lista = listasRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Lista não encontrada com id: " + id));
+
+        // Apenas o nome da lista será atualizado. O usuarioId do DTO será ignorado.
+        lista.setNome(dto.nome());
+
+        Listas updatedLista = listasRepository.save(lista);
+        return ListasMapper.toResponseDTO(updatedLista);
+    }
+
+
 }

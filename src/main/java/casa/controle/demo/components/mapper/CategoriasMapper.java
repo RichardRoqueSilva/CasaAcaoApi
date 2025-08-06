@@ -18,4 +18,9 @@ public class CategoriasMapper {
     public static CategoriasResponse toResponseDTO(Categorias entity) {
         return new CategoriasResponse(entity.getId(), entity.getNome(), entity.getDescricao());
     }
+
+    public static void updateEntityFromDTO(CategoriasRequest dto, Categorias entity) {
+        entity.setNome(dto.nome());
+        entity.setDescricao(dto.descricao());
+    }
 }

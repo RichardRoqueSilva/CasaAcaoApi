@@ -38,8 +38,7 @@ public class UsuariosController {
 
     @PutMapping("/{id}")
     public ResponseEntity<UsuariosResponse> update(@PathVariable Integer id, @RequestBody @Valid UsuariosRequest dto) {
-        UsuariosResponse updatedUsuario = usuariosService.update(id, dto);
-        return ResponseEntity.ok(updatedUsuario);
+        return ResponseEntity.ok(usuariosService.update(id, dto));
     }
 
     @DeleteMapping("/{id}")

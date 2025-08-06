@@ -42,4 +42,28 @@ public class ProdutosService {
                 .map(ProdutosMapper::toResponseDTO)
                 .collect(Collectors.toList());
     }
+    @Transactional
+    public ProdutosResponse update(Integer id, ProdutosRequest dto) {
+        Produtos produto = produtosRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Produto não encontrado com id: " + id));
+
+        Categorias categoria = categoriasRepository.findById(dto.categoriaId())
+                .orElseThrow(() -> new ResourceNotFoundException("Categoria não encontrada com id: " + dto.categoriaId()));
+
+        produto.setNome(dto.nome());
+        produto.setCategoria(categoria);
+
+        return ProdutosMapper.toResponseDTO(produtosRepository.save(produto));
+    }
+
+    @Transactional
+    public void delete(Integer id) {
+        if (!produtosRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Produto não encontrado com id: " + id);
+        }
+        // O banco de dados (ON DELETE RESTRICT padrão) vai impedir a exclusão se o produto
+        // estiver em alguma lista. Se quiser uma mensagem mais amigável, você precisaria
+        // de um `listaProdutoRepository.existsByProdutoId(id)`.
+        produtosRepository.deleteById(id);
+    }
 }
