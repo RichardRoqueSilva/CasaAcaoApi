@@ -54,8 +54,6 @@ public class Listas {
         return Objects.hash(id);
     }
 
-    // --- MÉTODO toString manual ---
-    // Importante: NÃO inclua a coleção 'itens' para evitar recursão
     @Override
     public String toString() {
         return "Lista{" +

@@ -11,7 +11,6 @@ import casa.controle.demo.components.repository.ProdutosRepository;
 import casa.controle.demo.components.repository.UsuariosRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -51,45 +50,77 @@ public class ListasService {
                 .collect(Collectors.toList());
     }
 
+
+    @Transactional
+    public ListasResponse updateItem(Integer listaId, Integer produtoId, ItemListaRequestDTO dto) {
+        Listas lista = listasRepository.findById(listaId)
+                .orElseThrow(() -> new ResourceNotFoundException("Lista não encontrada"));
+
+        ListaProdutos item = lista.getItens().stream()
+                .filter(i -> i.getProduto().getId().equals(produtoId))
+                .findFirst()
+                .orElseThrow(() -> new ResourceNotFoundException("Item não encontrado na lista"));
+
+        // Agora é uma atribuição direta, sem conversão!
+        item.setQuantidade(dto.quantidade());
+        item.setPrecoUnitario(dto.precoUnitario()); // O tipo do DTO e da Entidade agora são os mesmos.
+
+        listasRepository.save(lista);
+
+        return ListasMapper.toResponseDTO(lista);
+    }
+
     @Transactional
     public ListasResponse addItem(Integer listaId, ItemListaRequestDTO itemDto) {
         Listas lista = listasRepository.findById(listaId)
-                .orElseThrow(() -> new ResourceNotFoundException("Lista não encontrada com id: " + listaId));
+                .orElseThrow(() -> new ResourceNotFoundException("Lista não encontrada"));
 
         Produtos produto = produtosRepository.findById(itemDto.produtoId())
-                .orElseThrow(() -> new ResourceNotFoundException("Produto não encontrado com id: " + itemDto.produtoId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Produto não encontrado"));
 
-        // Delegamos toda a lógica para a própria entidade Lista
-        lista.addItem(produto, itemDto.quantidade());
+        // A lógica de adicionar o item já deve chamar um construtor ou setters.
+        // Garanta que o preço seja passado corretamente.
+        ListaProdutos item = new ListaProdutos(lista, produto, itemDto.quantidade());
+        item.setPrecoUnitario(itemDto.precoUnitario()); // Atribuição direta
 
-        // Ao salvar a lista, o JPA cuidará do item novo ou atualizado devido ao cascade.
+        lista.getItens().add(item);
+
         return ListasMapper.toResponseDTO(listasRepository.save(lista));
     }
 
-    @Transactional
-    public void removeItem(Integer listaId, Integer produtoId) {
-        Listas lista = listasRepository.findById(listaId)
-                .orElseThrow(() -> new ResourceNotFoundException("Lista não encontrada com id: " + listaId));
-
-        Produtos produto = produtosRepository.findById(produtoId)
-                .orElseThrow(() -> new ResourceNotFoundException("Produto não encontrado com id: " + produtoId));
-
-        // Delegamos a lógica de remoção para a entidade
-        lista.removeItem(produto);
-
-        listasRepository.save(lista); // orphanRemoval=true fará a remoção do banco
-    }
     @Transactional
     public ListasResponse update(Integer id, ListasRequest dto) {
         Listas lista = listasRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Lista não encontrada com id: " + id));
 
-        // Apenas o nome da lista será atualizado. O usuarioId do DTO será ignorado.
         lista.setNome(dto.nome());
-
         Listas updatedLista = listasRepository.save(lista);
         return ListasMapper.toResponseDTO(updatedLista);
     }
 
+    @Transactional
+    public void delete(Integer id) {
+        // Busca a entidade primeiro para garantir que ela exista e para que o Hibernate
+        // a coloque no contexto de persistência, o que ativa a cascata.
+        Listas lista = listasRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Lista não encontrada para o id: ".concat(id.toString())));
 
+        // Ao deletar o objeto da entidade, o Hibernate irá deletar os filhos primeiro
+        // por causa da anotação @OneToMany(cascade = CascadeType.ALL).
+        listasRepository.delete(lista);
+    }
+
+    @Transactional
+    public void removeItem(Integer listaId, Integer produtoId) {
+        Listas lista = listasRepository.findById(listaId)
+                .orElseThrow(() -> new ResourceNotFoundException("Lista não encontrada"));
+
+        boolean removed = lista.getItens().removeIf(item -> item.getProduto().getId().equals(produtoId));
+
+        if (!removed) {
+            throw new ResourceNotFoundException("Item não encontrado para remoção");
+        }
+
+        listasRepository.save(lista);
+    }
 }

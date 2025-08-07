@@ -63,7 +63,6 @@ public class ListaProdutos {
         return Objects.hash(id);
     }
 
-    // --- MÉTODO toString manual ---
     // Não inclua as entidades 'lista' e 'produto' para evitar o ciclo
     @Override
     public String toString() {

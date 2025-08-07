@@ -33,26 +33,46 @@ public class ListasController {
 
     @GetMapping
     public ResponseEntity<List<ListasResponse>> findAll() {
-        List<ListasResponse> listas = listasService.findAll();
-        return ResponseEntity.ok(listas);
+        return ResponseEntity.ok(listasService.findAll());
     }
 
-    // Endpoint para adicionar um item a uma lista existente
     @PostMapping("/{listaId}/itens")
     public ResponseEntity<ListasResponse> addItemToLista(@PathVariable Integer listaId, @RequestBody @Valid ItemListaRequestDTO itemDto) {
         return ResponseEntity.ok(listasService.addItem(listaId, itemDto));
     }
 
-    // Endpoint para remover um item de uma lista existente
+    @PutMapping("/{id}")
+    public ResponseEntity<ListasResponse> update(@PathVariable Integer id, @RequestBody @Valid ListasRequest dto) {
+        return ResponseEntity.ok(listasService.update(id, dto));
+    }
+
+//    @DeleteMapping("/{listaId}/itens/{produtoId}")
+//    public ResponseEntity<Void> removeItemDaLista(@PathVariable Integer listaId, @PathVariable Integer produtoId) {
+//        listasService.removeItem(listaId, produtoId);
+//        return ResponseEntity.noContent().build();
+//    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Integer id) {
+        listasService.delete(id);
+        // Retorna um status 204 No Content, que é o padrão HTTP para uma exclusão bem-sucedida.
+        return ResponseEntity.noContent().build();
+    }
+
+
+    @PutMapping("/{listaId}/itens/{produtoId}")
+    public ResponseEntity<ListasResponse> updateItem(
+            @PathVariable Integer listaId,
+            @PathVariable Integer produtoId,
+            // Agora esperamos o DTO existente
+            @RequestBody @Valid ItemListaRequestDTO dto) {
+        ListasResponse listaAtualizada = listasService.updateItem(listaId, produtoId, dto);
+        return ResponseEntity.ok(listaAtualizada);
+    }
+
     @DeleteMapping("/{listaId}/itens/{produtoId}")
-    public ResponseEntity<Void> removeItemDaLista(@PathVariable Integer listaId, @PathVariable Integer produtoId) {
+    public ResponseEntity<Void> removeItem(@PathVariable Integer listaId, @PathVariable Integer produtoId) {
         listasService.removeItem(listaId, produtoId);
         return ResponseEntity.noContent().build();
     }
-    @PutMapping("/{id}")
-    public ResponseEntity<ListasResponse> update(@PathVariable Integer id, @RequestBody @Valid ListasRequest dto) {
-        ListasResponse updatedLista = listasService.update(id, dto);
-        return ResponseEntity.ok(updatedLista);
-    }
-
 }
